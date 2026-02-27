@@ -15,7 +15,7 @@ const ArbiterGame = () => {
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
   const [verdict, setVerdict] = useState<VerdictData | null>(null);
-  const [topic, setTopic] = useState<string | null>(null);
+  const [topic, setTopic] = useState("");
   const [topicLoading, setTopicLoading] = useState(false);
 
   const generateTopic = async () => {
@@ -23,7 +23,7 @@ const ArbiterGame = () => {
     try {
       const projectUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${projectUrl}/functions/v1/judge-proxy?action=generate-topic`, {
+      const res = await fetch(`${projectUrl}/functions/v1/judge-proxy?action=generate-topic&t=${Date.now()}`, {
         headers: { "Authorization": `Bearer ${anonKey}`, "apikey": anonKey },
       });
       const data = await res.json();
@@ -45,7 +45,7 @@ const ArbiterGame = () => {
     setState("loading");
     try {
       const { data, error } = await supabase.functions.invoke("judge-proxy", {
-        body: { player_1_argument: p1, player_2_argument: p2 },
+        body: { topic: topic || undefined, player_1_argument: p1, player_2_argument: p2 },
       });
 
       if (error) throw new Error(error.message);
@@ -60,7 +60,7 @@ const ArbiterGame = () => {
 
   const reset = () => {
     setState("input");
-    setTopic(null);
+    setTopic("");
     setP1("");
     setP2("");
     setVerdict(null);
@@ -109,16 +109,18 @@ const ArbiterGame = () => {
                 )}
               </button>
 
-              {topic && (
-                <div className="w-full text-center p-4 rounded-lg border border-primary/30 bg-primary/5 glow-primary">
-                  <p className="text-xs font-display tracking-widest text-muted-foreground uppercase mb-2">
-                    Today's Debate
-                  </p>
-                  <p className="text-lg font-semibold text-gradient-primary">
-                    {topic}
-                  </p>
-                </div>
-              )}
+              <div className="w-full">
+                <label className="block text-xs font-display tracking-widest text-muted-foreground uppercase mb-2 text-center">
+                  Debate Topic
+                </label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Enter a debate topic, or generate one..."
+                  className="w-full bg-input/60 border border-primary/30 rounded-lg px-4 py-3 text-center text-lg font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
+                />
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
