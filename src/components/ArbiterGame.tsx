@@ -29,7 +29,7 @@ const ArbiterGame = () => {
       });
 
       if (error) throw new Error(error.message);
-      if (!data || data.error) throw new Error(data?.error || "Invalid response");
+      if (!data || data.error || data.detail) throw new Error(data?.detail || data?.error || "Invalid response");
       setVerdict(data);
       setState("verdict");
     } catch (err: any) {
