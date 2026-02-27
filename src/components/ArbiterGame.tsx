@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Shield, CheckCircle2, RotateCcw, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type GameState = "input" | "loading" | "verdict";
 
@@ -23,15 +24,12 @@ const ArbiterGame = () => {
 
     setState("loading");
     try {
-      const res = await fetch("http://38.49.209.149:8000/judge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player_1_argument: p1, player_2_argument: p2 }),
+      const { data, error } = await supabase.functions.invoke("judge-proxy", {
+        body: { player_1_argument: p1, player_2_argument: p2 },
       });
 
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-
-      const data: VerdictData = await res.json();
+      if (error) throw new Error(error.message);
+      if (!data || data.error) throw new Error(data?.error || "Invalid response");
       setVerdict(data);
       setState("verdict");
     } catch (err: any) {
