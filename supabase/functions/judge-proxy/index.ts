@@ -21,8 +21,18 @@ Deno.serve(async (req) => {
 
     const data = await res.text();
 
+    if (!res.ok) {
+      const detail = (() => {
+        try { return JSON.parse(data)?.detail; } catch { return data; }
+      })();
+      return new Response(JSON.stringify({ error: detail || `Upstream error: ${res.status}` }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(data, {
-      status: res.status,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
