@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Shield, CheckCircle2, RotateCcw, Loader2 } from "lucide-react";
+import { Shield, CheckCircle2, RotateCcw, Loader2, Dices } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type GameState = "input" | "loading" | "verdict";
@@ -15,6 +15,26 @@ const ArbiterGame = () => {
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
   const [verdict, setVerdict] = useState<VerdictData | null>(null);
+  const [topic, setTopic] = useState<string | null>(null);
+  const [topicLoading, setTopicLoading] = useState(false);
+
+  const generateTopic = async () => {
+    setTopicLoading(true);
+    try {
+      const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(`${projectUrl}/functions/v1/judge-proxy?action=generate-topic`, {
+        headers: { "Authorization": `Bearer ${anonKey}`, "apikey": anonKey },
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to generate topic");
+      setTopic(data.topic);
+    } catch (err: any) {
+      toast.error(err.message || "Could not generate a topic.");
+    } finally {
+      setTopicLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!p1.trim() || !p2.trim()) {
@@ -40,6 +60,7 @@ const ArbiterGame = () => {
 
   const reset = () => {
     setState("input");
+    setTopic(null);
     setP1("");
     setP2("");
     setVerdict(null);
@@ -68,6 +89,38 @@ const ArbiterGame = () => {
       <div className="w-full max-w-3xl relative z-10">
         {state === "input" && (
           <div className="glass-surface rounded-xl p-6 md:p-8 space-y-6">
+            {/* Topic Generator */}
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={generateTopic}
+                disabled={topicLoading}
+                className="flex items-center gap-2 font-display text-xs tracking-widest uppercase px-6 py-3 rounded-lg border border-accent/40 bg-accent/10 text-accent glow-accent hover:bg-accent/20 transition-all duration-300 active:scale-[0.98] disabled:opacity-60"
+              >
+                {topicLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Brainstorming…
+                  </>
+                ) : (
+                  <>
+                    <Dices className="w-4 h-4" />
+                    🎲 Generate Debate Topic
+                  </>
+                )}
+              </button>
+
+              {topic && (
+                <div className="w-full text-center p-4 rounded-lg border border-primary/30 bg-primary/5 glow-primary">
+                  <p className="text-xs font-display tracking-widest text-muted-foreground uppercase mb-2">
+                    Today's Debate
+                  </p>
+                  <p className="text-lg font-semibold text-gradient-primary">
+                    {topic}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="font-display text-xs tracking-widest text-primary uppercase">
