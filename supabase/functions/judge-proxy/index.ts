@@ -11,13 +11,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action");
 
-    const res = await fetch("http://38.49.209.149:8000/judge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let res: Response;
+
+    if (action === "generate-topic") {
+      res = await fetch("http://38.49.209.149:8000/generate-topic", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      const body = await req.json();
+      res = await fetch("http://38.49.209.149:8000/judge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
 
     const data = await res.text();
 
